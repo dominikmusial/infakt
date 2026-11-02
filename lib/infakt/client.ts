@@ -7,6 +7,13 @@ import {
   CreateClientPayload,
   Metainfo,
 } from "./types";
+import {
+  getDemoClients,
+  addDemoClient,
+  getDemoInvoices,
+  addDemoInvoice,
+  createDemoInvoicePdf,
+} from "./mock-store";
 
 export class InfaktClient {
   private apiKey: string;
@@ -26,6 +33,16 @@ export class InfaktClient {
         : "https://api.sandbox-infakt.pl/api/v3";
   }
 
+  isDemo(): boolean {
+    const key = (this.apiKey || "").trim().toLowerCase();
+    return (
+      key === "demo" ||
+      key === "demo_sandbox_key" ||
+      key.includes("demo") ||
+      process.env.INFAKT_DEMO_MODE === "true"
+    );
+  }
+
   getEnvironment(): InfaktEnvironment {
     return this.environment;
   }
@@ -39,7 +56,7 @@ export class InfaktClient {
   }
 
   private getHeaders(): Record<string, string> {
-    if (!this.isKeyConfigured()) {
+    if (!this.isKeyConfigured() && !this.isDemo()) {
       throw new Error("Klucz API inFakt nie został skonfigurowany.");
     }
     return {
@@ -57,8 +74,23 @@ export class InfaktClient {
     environment: InfaktEnvironment;
     baseUrl: string;
     message: string;
+    isDemo?: boolean;
     details?: any;
   }> {
+    if (this.isDemo()) {
+      return {
+        success: true,
+        environment: "sandbox",
+        baseUrl: "https://api.sandbox-infakt.pl/api/v3 (Symulator Demo)",
+        message: "Aktywny tryb Symulatora Sandbox (bez wymaganego konta inFakt)!",
+        isDemo: true,
+        details: {
+          totalClients: getDemoClients().length,
+          totalInvoices: getDemoInvoices().length,
+        },
+      };
+    }
+
     if (!this.isKeyConfigured()) {
       return {
         success: false,
@@ -69,7 +101,6 @@ export class InfaktClient {
     }
 
     try {
-      // Zapytanie o listę klientów z limitem 1 do weryfikacji klucza
       const response = await fetch(`${this.baseUrl}/clients.json?limit=1`, {
         method: "GET",
         headers: this.getHeaders(),
@@ -123,7 +154,16 @@ export class InfaktClient {
     limit?: number;
     offset?: number;
     order?: string;
-  }): Promise<{ entities: Invoice[]; metainfo: Metainfo }> {
+  }): Promise<{ entities: Invoice[]; metainfo: Metainfo; isDemo?: boolean }> {
+    if (this.isDemo()) {
+      const all = getDemoInvoices();
+      return {
+        entities: all,
+        metainfo: { count: all.length, total_count: all.length },
+        isDemo: true,
+      };
+    }
+
     const url = new URL(`${this.baseUrl}/invoices.json`);
     if (params?.limit) url.searchParams.set("limit", String(params.limit));
     if (params?.offset) url.searchParams.set("offset", String(params.offset));
@@ -153,6 +193,14 @@ export class InfaktClient {
    * Pobiera pojedynczą fakturę po ID lub UUID
    */
   async getInvoice(idOrUuid: string | number): Promise<Invoice> {
+    if (this.isDemo()) {
+      const found = getDemoInvoices().find(
+        (i) => i.uuid === idOrUuid || String(i.id) === String(idOrUuid)
+      );
+      if (found) return found;
+      return getDemoInvoices()[0];
+    }
+
     const response = await fetch(`${this.baseUrl}/invoices/${idOrUuid}.json`, {
       method: "GET",
       headers: this.getHeaders(),
@@ -172,6 +220,10 @@ export class InfaktClient {
    * Tworzy nową fakturę w inFakt
    */
   async createInvoice(payload: CreateInvoicePayload): Promise<Invoice> {
+    if (this.isDemo()) {
+      return addDemoInvoice(payload);
+    }
+
     const response = await fetch(`${this.baseUrl}/invoices.json`, {
       method: "POST",
       headers: this.getHeaders(),
@@ -199,6 +251,10 @@ export class InfaktClient {
     uuid: string,
     documentType: string = "original"
   ): Promise<ArrayBuffer> {
+    if (this.isDemo() || uuid.startsWith("demo-")) {
+      return createDemoInvoicePdf(uuid);
+    }
+
     const url = `${this.baseUrl}/invoices/${uuid}/pdf.json?document_type=${documentType}`;
     const response = await fetch(url, {
       method: "GET",
@@ -224,7 +280,16 @@ export class InfaktClient {
   async getClients(params?: {
     limit?: number;
     offset?: number;
-  }): Promise<{ entities: Client[]; metainfo: Metainfo }> {
+  }): Promise<{ entities: Client[]; metainfo: Metainfo; isDemo?: boolean }> {
+    if (this.isDemo()) {
+      const all = getDemoClients();
+      return {
+        entities: all,
+        metainfo: { count: all.length, total_count: all.length },
+        isDemo: true,
+      };
+    }
+
     const url = new URL(`${this.baseUrl}/clients.json`);
     if (params?.limit) url.searchParams.set("limit", String(params.limit));
     if (params?.offset) url.searchParams.set("offset", String(params.offset));
@@ -252,6 +317,10 @@ export class InfaktClient {
    * Tworzy nowego klienta / kontrahenta
    */
   async createClient(payload: CreateClientPayload): Promise<Client> {
+    if (this.isDemo()) {
+      return addDemoClient(payload);
+    }
+
     const response = await fetch(`${this.baseUrl}/clients.json`, {
       method: "POST",
       headers: this.getHeaders(),

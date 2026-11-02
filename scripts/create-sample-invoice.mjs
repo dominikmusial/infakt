@@ -109,3 +109,4 @@ try {
   console.log(`\n❌ Błąd sieciowy: ${error.message}`);
   process.exit(1);
 }
+

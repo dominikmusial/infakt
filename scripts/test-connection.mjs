@@ -19,8 +19,13 @@ if (fs.existsSync(envLocalPath)) {
   }
 }
 
-const apiKey = process.env.INFAKT_API_KEY;
+const apiKey = process.env.INFAKT_API_KEY || "";
 const environment = process.env.INFAKT_ENVIRONMENT || "sandbox";
+const isDemo =
+  process.env.INFAKT_DEMO_MODE === "true" ||
+  apiKey.toLowerCase().includes("demo") ||
+  apiKey === "DEMO_SANDBOX_KEY";
+
 const baseUrl =
   environment === "production"
     ? "https://api.infakt.pl/api/v3"
@@ -29,8 +34,19 @@ const baseUrl =
 console.log("\n========================================");
 console.log("   inFakt API Connection Test (Node.js) ");
 console.log("========================================\n");
-console.log(`Środowisko:  ${environment.toUpperCase()}`);
+console.log(`Środowisko:  ${environment.toUpperCase()}${isDemo ? " (Tryb Symulatora Demo)" : ""}`);
 console.log(`Adres API:    ${baseUrl}`);
+
+if (isDemo) {
+  console.log(`Klucz API:    ${apiKey} [TRYB SYMULATORA DEMO]`);
+  console.log("\n✅ SUKCES! Tryb symulatora Demo Sandbox jest aktywny!");
+  console.log("Liczba kontrahentów w bazie demo: 3");
+  console.log("Liczba faktur w bazie demo:      2");
+  console.log("\nMożesz testować aplikację w przeglądarce pod adresem: http://localhost:3000");
+  console.log("Gdy będziesz chciał połączyć z prawdziwym inFaktem, zarejestruj się na:");
+  console.log("  https://konto.sandbox-infakt.pl/rejestracja\n");
+  process.exit(0);
+}
 
 if (!apiKey || apiKey.trim().length === 0) {
   console.log("\n❌ BŁĄD: Brak klucza API!");

@@ -316,3 +316,4 @@ export function InvoicesList({ clients, onRefreshClients }: InvoicesListProps) {
     </div>
   );
 }
+

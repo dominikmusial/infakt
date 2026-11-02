@@ -130,3 +130,4 @@ npm run create-test-invoice
 ## ℹ️ Ważne uwagi techniczne o inFakt API v3
 - **Waluta i grosze:** API inFakt przyjmuje ceny w groszach jako liczby całkowite (`unit_net_price: 10000` = `100.00 PLN`). Aplikacja oraz skrypty automatycznie wykonują to przeliczenie.
 - **Pobieranie PDF:** Endpoint `/api/v3/invoices/{uuid}/pdf.json?document_type=original` zwraca bezpośrednio strumień binarny pliku PDF (`Content-Type: application/pdf`), który w aplikacji jest natychmiast przekierowywany do pobrania.
+

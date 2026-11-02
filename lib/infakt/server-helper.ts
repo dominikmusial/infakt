@@ -11,3 +11,4 @@ export function getClientFromRequest(req: NextRequest): InfaktClient {
     environment: customEnv || (process.env.INFAKT_ENVIRONMENT as InfaktEnvironment) || "sandbox",
   });
 }
+

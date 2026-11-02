@@ -10,13 +10,16 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { ApiKeyModal } from "./ApiKeyModal";
 
 export function Header() {
-  const { environment, status, refreshStatus } = useInfakt();
+  const { apiKey, environment, status, refreshStatus } = useInfakt();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const isDemo = apiKey.toLowerCase().includes("demo");
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -41,12 +44,18 @@ export function Header() {
                   </h1>
                   <span
                     className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                      environment === "sandbox"
+                      isDemo
+                        ? "bg-purple-100 text-purple-800 border border-purple-300"
+                        : environment === "sandbox"
                         ? "bg-amber-100 text-amber-800 border border-amber-300"
                         : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                     }`}
                   >
-                    {environment === "sandbox" ? "Sandbox (Test)" : "Produkcja"}
+                    {isDemo
+                      ? "Symulator Demo"
+                      : environment === "sandbox"
+                      ? "Sandbox"
+                      : "Produkcja"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
@@ -67,7 +76,7 @@ export function Header() {
                   <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>API Połączone</span>
+                    <span>{isDemo ? "Symulator Aktywny" : "API Połączone"}</span>
                   </div>
                 )}
                 {status === "checking" && (
@@ -111,17 +120,13 @@ export function Header() {
 
               {/* Link do Sandbox inFakt */}
               <a
-                href={
-                  environment === "sandbox"
-                    ? "https://konto.sandbox-infakt.pl"
-                    : "https://pomoc.infakt.pl"
-                }
+                href="https://konto.sandbox-infakt.pl/rejestracja"
                 target="_blank"
                 rel="noreferrer"
                 className="hidden md:flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Panel inFakt {environment === "sandbox" ? "Sandbox" : ""}</span>
+                <span>Konto inFakt Sandbox</span>
                 <ExternalLink className="w-3 h-3 ml-0.5" />
               </a>
             </div>

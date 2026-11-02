@@ -190,3 +190,4 @@ export function ClientsList({ clients, loading, onRefresh }: ClientsListProps) {
     </div>
   );
 }
+
